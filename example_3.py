@@ -63,7 +63,7 @@ def main():
 
     # Run the workers
     with Timer(text="Task elapsed time: {:.2f} seconds"):
-        while len(workers):
+        while workers:
             for worker_ in workers:
                 try:
                     next(worker_)

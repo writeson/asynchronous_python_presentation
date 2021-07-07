@@ -58,12 +58,11 @@ def main():
 
     # Run the workers
     with Timer(text="Total elapsed time: {:.2f}"):
-        while len(workers):
+        while workers:
             for worker_ in workers:
                 worker_fn, name, queue = worker_
                 worker_fn(name, queue)
                 workers.remove(worker_)
-
 
 if __name__ == "__main__":
     print()
