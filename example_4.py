@@ -9,15 +9,37 @@ import asyncio
 from codetiming import Timer
 
 
-async def task(delay: float=0):
+async def factorial(number: int):
+    async def inner_factorial(number):
+        if number <= 1:
+            return 1
+        if number % 10 == 0:
+            print("Context switch to event loop")
+            await asyncio.sleep(0)
+        return number * await inner_factorial(number - 1)
+    return await inner_factorial(number)        
+
+
+async def io_task(delay: float=0):
     """This is a little task that takes some time to complete
 
     Args:
         delay (int): The delay the task takes
     """
-    with Timer(text="Task elapsed time: {:.2f} seconds"):
+    with Timer(text="IO Task elapsed time: {:.2f} seconds"):
         await asyncio.sleep(delay)
         return delay
+
+
+async def cpu_task(number: int):
+    """This is a cpu bound task that takes some time to complete
+
+    Args:
+        number (int): The number to get calculate a factorial for
+    """
+    with Timer(text="CPU Task elapsed time: {:.2f} seconds"):
+        result = await factorial(number)
+        return result
 
 
 async def worker(name: str, task_queue: asyncio.Queue):
@@ -47,10 +69,12 @@ async def main():
 
     # Put some tasks in the queue
     list(map(task_queue.put_nowait, [
-        (task, {"delay": 4.0}), 
-        (task, {"delay": 3.0}), 
-        (task, {"delay": 2.0}),
-        (task, {"delay": 1.0}),
+        (io_task, {"delay": 4.0}),
+        (cpu_task, {"number": 40}),
+        (io_task, {"delay": 3.0}), 
+        (io_task, {"delay": 2.0}),
+        (cpu_task, {"number": 50}),
+        (io_task, {"delay": 1.0}),
     ]))
 
     with Timer(text="Total elapsed time: {:.2f}"):

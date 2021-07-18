@@ -10,15 +10,33 @@ from queue import Queue
 from codetiming import Timer
 
 
-def task(delay: float=0):
+def factorial(number: int):
+    def inner_factorial(number):
+        if number <= 1:
+            return 1
+        return number * inner_factorial(number - 1)
+    return inner_factorial(number)        
+
+
+def io_task(delay: float=0):
     """This is a little task that takes some time to complete
 
     Args:
         delay (int): The delay the task takes
     """
-    with Timer(text="Task elapsed time: {:.2f} seconds"):
+    with Timer(text="IO Task elapsed time: {:.2f} seconds"):
         sleep(delay)
         return delay
+
+
+def cpu_task(number: int):
+    """This is a cpu bound task that takes some time to complete
+
+    Args:
+        number (int): The number to get calculate a factorial for
+    """
+    with Timer(text="CPU Task elapsed time: {:.2f} seconds"):
+        return factorial(number)
 
 
 def worker(name: str, task_queue: Queue):
@@ -49,10 +67,12 @@ def main():
 
     # Put some tasks in the queue
     list(map(task_queue.put, [
-        (task, {"delay": 4.0}), 
-        (task, {"delay": 3.0}), 
-        (task, {"delay": 2.0}),
-        (task, {"delay": 1.0}),
+        (io_task, {"delay": 4.0}),
+        (cpu_task, {"number": 40}),
+        (io_task, {"delay": 3.0}), 
+        (io_task, {"delay": 2.0}),
+        (cpu_task, {"number": 50}),
+        (io_task, {"delay": 1.0}),
     ]))
 
     # Create two workers

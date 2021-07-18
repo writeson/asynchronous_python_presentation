@@ -13,7 +13,18 @@ import aiohttp
 from codetiming import Timer
 
 
-async def task(url: str=""):
+async def factorial(number: int):
+    async def inner_factorial(number):
+        if number <= 1:
+            return 1
+        if number % 10 == 0:
+            print("Context switch to event loop")
+            await asyncio.sleep(0)
+        return number * await inner_factorial(number - 1)
+    return await inner_factorial(number)        
+
+
+async def io_task(url: str=""):
     """This is a little task that takes some time to complete
 
     Args:
@@ -24,6 +35,17 @@ async def task(url: str=""):
             async with session.get(url) as response:
                 text = await response.text()
                 return url, text
+
+
+async def cpu_task(number: int):
+    """This is a cpu bound task that takes some time to complete
+
+    Args:
+        number (int): The number to get calculate a factorial for
+    """
+    with Timer(text="CPU Task elapsed time: {:.2f} seconds"):
+        result = await factorial(number)
+        return result
 
 
 async def worker(name: str, task_queue: asyncio.Queue):
@@ -38,8 +60,12 @@ async def worker(name: str, task_queue: asyncio.Queue):
     print(f"Worker {name} starting to run tasks")
     while not task_queue.empty():
         fn, kwargs = await task_queue.get()
-        url, text = await fn(**kwargs)
-        print(f"Worker {name} completed task: url = {url}, text = {text.strip()[:50]}\n")
+        if fn.__name__ == "io_task":
+            url, text = await fn(**kwargs)
+            print(f"Worker {name} completed task: url = {url}, text = {text.strip()[:50]}\n")
+        else:
+            factorial = await fn(**kwargs)
+            print(f"Worker {name} completed task: {factorial=}")
 
     print(f"Worker {name} finished as there are no more tasks\n")
 
@@ -53,13 +79,15 @@ async def main():
 
     # Put some tasks in the queue
     list(map(task_queue.put_nowait, [
-        (task, {"url": "https://weather.com/"}), 
-        (task, {"url": "http://yahoo.com"}), 
-        (task, {"url": "http://linkedin.com"}), 
-        (task, {"url": "https://www.dropbox.com"}), 
-        (task, {"url": "http://microsoft.com"}), 
-        (task, {"url": "http://facebook.com"}),
-        (task, {"url": "https://www.target.com/"}),
+        (io_task, {"url": "https://weather.com/"}), 
+        (cpu_task, {"number": 40}),
+        (io_task, {"url": "http://yahoo.com"}), 
+        (io_task, {"url": "http://linkedin.com"}), 
+        (io_task, {"url": "https://www.dropbox.com"}), 
+        (io_task, {"url": "http://microsoft.com"}), 
+        (cpu_task, {"number": 50}),
+        (io_task, {"url": "http://facebook.com"}),
+        (io_task, {"url": "https://www.target.com/"}),
     ]))
 
     with Timer(text="Total elapsed time: {:.2f}"):

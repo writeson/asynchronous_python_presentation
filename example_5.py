@@ -13,7 +13,15 @@ from queue import Queue
 from codetiming import Timer
 
 
-def task(url: str=""):
+def factorial(number: int):
+    def inner_factorial(number):
+        if number <= 1:
+            return 1
+        return number * inner_factorial(number - 1)
+    return inner_factorial(number)        
+
+
+def io_task(url: str=""):
     """This is a little task that takes some time to complete
 
     Args:
@@ -23,6 +31,16 @@ def task(url: str=""):
         with requests.Session() as session:
             response = session.get(url)
             return url, response.text
+
+
+def cpu_task(number: int):
+    """This is a cpu bound task that takes some time to complete
+
+    Args:
+        number (int): The number to get calculate a factorial for
+    """
+    with Timer(text="CPU Task elapsed time: {:.2f} seconds"):
+        return factorial(number)
 
 
 def worker(name: str, task_queue: Queue):
@@ -38,8 +56,12 @@ def worker(name: str, task_queue: Queue):
     while not task_queue.empty():
         fn, kwargs = task_queue.get()
         yield
-        url, text = fn(**kwargs)
-        print(f"Worker {name} completed task: url = {url}, text = {text.strip()[:50]}\n")
+        if fn.__name__ == "io_task":
+            url, text = fn(**kwargs)
+            print(f"Worker {name} completed task: {url=}, text = {text.strip()[:50]}\n")
+        else:
+            factorial = fn(**kwargs)
+            print(f"Worker {name} completed task: {factorial=}")
 
     print(f"Worker {name} finished as there are no more tasks\n")
 
@@ -52,13 +74,15 @@ def main():
     task_queue = Queue()
 
     list(map(task_queue.put_nowait, [
-        (task, {"url": "https://weather.com/"}), 
-        (task, {"url": "http://yahoo.com"}), 
-        (task, {"url": "http://linkedin.com"}), 
-        (task, {"url": "https://www.dropbox.com"}), 
-        (task, {"url": "http://microsoft.com"}), 
-        (task, {"url": "http://facebook.com"}),
-        (task, {"url": "https://www.target.com/"}),
+        (io_task, {"url": "https://weather.com/"}), 
+        (cpu_task, {"number": 40}),
+        (io_task, {"url": "http://yahoo.com"}), 
+        (io_task, {"url": "http://linkedin.com"}), 
+        (io_task, {"url": "https://www.dropbox.com"}), 
+        (io_task, {"url": "http://microsoft.com"}), 
+        (cpu_task, {"number": 50}),
+        (io_task, {"url": "http://facebook.com"}),
+        (io_task, {"url": "https://www.target.com/"}),
     ]))
 
     # Create two workers
