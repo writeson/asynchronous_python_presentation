@@ -62,7 +62,7 @@ async def worker(name: str, task_queue: asyncio.Queue):
         fn, kwargs = await task_queue.get()
         if fn.__name__ == "io_task":
             url, text = await fn(**kwargs)
-            print(f"Worker {name} completed task: url = {url}, text = {text.strip()[:50]}\n")
+            print(f"Worker {name} completed task: {url=}, text = {text.strip()[:50]}\n")
         else:
             factorial = await fn(**kwargs)
             print(f"Worker {name} completed task: {factorial=}")

@@ -77,10 +77,10 @@ async def worker(name: str, task_queue: asyncio.Queue):
         fn, kwargs = await task_queue.get()
         if fn.__name__ == "io_task_get_web_pages":
             url, text = await fn(**kwargs)
-            print(f"Worker {name} completed task: url = {url}, text = {text.strip()[:50]}\n")
+            print(f"Worker {name} completed task: {url=}, text = {text.strip()[:50]}\n")
         elif fn.__name__ == "io_task_read_file":
             filename, line_counter = await fn(**kwargs)
-            print(f"Worker {name} completed task: filename = {filename}, line_counter = {line_counter}")
+            print(f"Worker {name} completed task: {filename=}, {line_counter=}")
         elif fn.__name__ == "cpu_task":
             factorial = await fn(**kwargs)
             print(f"Worker {name} completed task: {factorial=}")

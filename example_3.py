@@ -53,7 +53,7 @@ def worker(name: str, task_queue: Queue):
         fn, kwargs = task_queue.get()
         yield
         result = fn(**kwargs)
-        print(f"Worker {name} completed task: result = {result}\n")
+        print(f"Worker {name} completed task: {result=}\n")
 
     print(f"Worker {name} finished as there are no more tasks\n")
 

@@ -55,7 +55,7 @@ async def worker(name: str, task_queue: asyncio.Queue):
     while not task_queue.empty():
         fn, kwargs = await task_queue.get()
         result = await fn(**kwargs)
-        print(f"Worker {name} completed task: result = {result}\n")
+        print(f"Worker {name} completed task: {result=}\n")
 
     print(f"Worker {name} finished as there are no more tasks\n")
 
